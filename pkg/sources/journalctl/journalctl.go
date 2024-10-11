@@ -10,12 +10,15 @@ import (
 )
 
 func ReadUnit(name string, cursor string, count int) ([]Event, error) {
-    if name == "" || count == 0 {
+    if count == 0 {
         return []Event{}, errors.New("invalid arguments" )
     }
-    arg := fmt.Sprintf("journalctl -u %s -o json -n %d", name, count)
+    arg := fmt.Sprintf("journalctl -o json -n %d", count)
+    if name != "" {
+        arg = fmt.Sprintf("%s --unit %s", arg, name)
+    }
     if cursor != "" {
-        arg = fmt.Sprintf("%s --cursor %s", arg, cursor)
+        arg = fmt.Sprintf("%s --after-cursor=\"%s\"", arg, cursor)
     }
     ticker := time.NewTicker(1 * time.Second)
     defer ticker.Stop()
@@ -33,6 +36,7 @@ func ReadUnit(name string, cursor string, count int) ([]Event, error) {
         if err := json.Unmarshal([]byte(item), &out); err != nil {
             return []Event{}, err
         }
+        out.Timestamp *= int64(time.Microsecond)
         events = append(events, out)
     }
     return events, nil

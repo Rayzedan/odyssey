@@ -2,7 +2,8 @@ package main
 
 import (
     "log"
-    "strconv"
+    "os"
+    "os/signal"
     "time"
 
     "github.com/rayzedan/odyssey/pkg/network/tcp/client"
@@ -15,25 +16,30 @@ func main() {
     if err != nil {
         log.Fatalf("failed to connect: %v", err)
     }
+    signals := make(chan os.Signal, 1)
+    signal.Notify(signals, os.Interrupt)
+    go func() {
+        <-signals
+        client.Close()
+        log.Println("shutting down...")
+        os.Exit(0)
+    } ()
     defer client.Close()
     ticker := time.NewTicker(1 * time.Second)
     var cursor string
     for {
         for range ticker.C {
-            log.Printf("Reading unit...")
-            event, err := journalctl.ReadUnit("systemd-journald.service", cursor, 1)
+            event, err := journalctl.ReadUnit("", cursor, 1)
             if err != nil {
                 log.Fatalf("failed to read unit: %v", err)
             }
             if len(event) == 0 || event[0].IsEmpty() {
-                log.Printf("event is empty skip")
                 continue
             }
             if cursor != event[0].Cursor {
                 cursor = event[0].Cursor
-                log.Printf("cursor: %s", cursor)
             }
-            err = client.Send([]byte(event[0].Unit + " " + event[0].MessageSource + " " + strconv.FormatInt(event[0].Timestamp, 10)))
+            err = client.Send([]byte(event[0].String()))
             if err != nil {
                 log.Fatalf("failed to send message: %v", err)
             }

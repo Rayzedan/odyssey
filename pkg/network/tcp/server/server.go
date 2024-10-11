@@ -1,7 +1,7 @@
-
 package tcp
 
 import (
+    "io"
     "log"
     "net"
 )
@@ -48,6 +48,10 @@ func handleRequest(conn net.Conn) {
     for {
         n, err := conn.Read(buffer)
         if err != nil {
+            if err == io.EOF {
+                log.Println("Connection closed by client")
+                return
+            }
             log.Println("Error reading from connection:", err)
             return
         }
@@ -57,7 +61,7 @@ func handleRequest(conn net.Conn) {
             return
         }
 
-        log.Printf("Received message: %s\n", string(buffer[:n]))
+        log.Printf("Client %s sent: %s\n", conn.LocalAddr().String(), string(buffer[:n]))
     }
 }
 

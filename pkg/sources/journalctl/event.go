@@ -1,5 +1,10 @@
 package journalctl
 
+import (
+    "fmt"
+    "time"
+)
+
 type Event struct {
     Cursor        string      `json:"__CURSOR"`
     Timestamp     int64       `json:"__REALTIME_TIMESTAMP,string"`
@@ -13,4 +18,8 @@ type Event struct {
 
 func (e *Event) IsEmpty() bool {
     return e.Cursor == ""
+}
+
+func (e Event) String() string {
+    return fmt.Sprintf("%v %s %s %s", time.Unix(0, e.Timestamp), e.Priority, e.Unit, e.MessageSource)
 }
