@@ -7,7 +7,7 @@ import (
     "time"
 
     "github.com/rayzedan/odyssey/pkg/network/tcp/client"
-    "github.com/rayzedan/odyssey/pkg/sources/journalctl"
+    "github.com/rayzedan/odyssey/pkg/log_sources/journalctl"
 )
 
 func main() {
@@ -20,11 +20,11 @@ func main() {
     signal.Notify(signals, os.Interrupt)
     go func() {
         <-signals
-        client.Close()
-        log.Println("shutting down...")
+        client.Disconnect()
+        log.Println("closing connection by interrupt")
         os.Exit(0)
     } ()
-    defer client.Close()
+    defer client.Disconnect()
     ticker := time.NewTicker(1 * time.Second)
     var cursor string
     for {

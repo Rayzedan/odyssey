@@ -4,6 +4,7 @@ import (
     "io"
     "log"
     "net"
+    "time"
 )
 
 type Server struct {
@@ -43,6 +44,8 @@ func (s *Server) Listen() error {
 func handleRequest(conn net.Conn) {
     defer conn.Close()
 
+    conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+    //TODO: too much buffer mb, can use default tcp package with header = length
     buffer := make([]byte, 1024)
 
     for {
@@ -61,7 +64,6 @@ func handleRequest(conn net.Conn) {
             return
         }
 
-        log.Printf("Client %s sent: %s\n", conn.LocalAddr().String(), string(buffer[:n]))
+        log.Printf("%s: %s\n", conn.LocalAddr().String(), string(buffer[:n]))
     }
 }
-
